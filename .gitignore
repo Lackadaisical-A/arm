@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.venv/
+recordings/
+tools/ffmpeg/
+ros2_so101_ws/build/
+ros2_so101_ws/install/
+ros2_so101_ws/log/

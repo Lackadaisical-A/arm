@@ -1,0 +1,8 @@
+{
+  "motor": "elbow_flex",
+  "motor_id": 3,
+  "port": "COM6",
+  "low": 1359,
+  "high": 3624,
+  "saved_at": "2026-06-27T05:18:14.643334+00:00"
+}

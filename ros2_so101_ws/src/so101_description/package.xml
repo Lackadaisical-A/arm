@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>so101_description</name>
+  <version>0.0.1</version>
+  <description>RViz description package for the SO-101 6DOF arm.</description>
+  <maintainer email="user@example.com">SO-101 User</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <exec_depend>joint_state_publisher_gui</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

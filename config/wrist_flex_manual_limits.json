@@ -1,0 +1,8 @@
+{
+  "motor": "wrist_flex",
+  "motor_id": 3,
+  "port": "COM6",
+  "low": 1362,
+  "high": 3590,
+  "saved_at": "2026-06-27T05:05:45.791287+00:00"
+}
