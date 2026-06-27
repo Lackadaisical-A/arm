@@ -52,8 +52,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sample-hz", type=float, default=20.0, help="Recording sample rate.")
     parser.add_argument("--step-ticks", type=int, default=20, help="Keyboard jog size in raw ticks.")
     parser.add_argument("--torque-limit", type=int, default=None, help="Session torque limit, 0-1000. Default is 1000 for elbow id 3, otherwise 300.")
-    parser.add_argument("--p-coefficient", type=int, default=32, help="Position P coefficient for this session.")
-    parser.add_argument("--min-startup-force", type=int, default=None, help="Minimum_Startup_Force. Default is 800 for elbow id 3, otherwise 80. Use 0 to leave unchanged.")
+    parser.add_argument("--p-coefficient", type=int, default=None, help="Position P coefficient. Default is 16 for elbow id 3, otherwise 32.")
+    parser.add_argument("--min-startup-force", type=int, default=None, help="Minimum_Startup_Force. Default is 16 for elbow id 3, otherwise 80. Use 0 to leave unchanged.")
     parser.add_argument("--acceleration", type=int, default=254, help="Acceleration for this session.")
     parser.add_argument("--maximum-acceleration", type=int, default=254, help="Maximum_Acceleration for this session.")
     parser.add_argument("--maximum-velocity-limit", type=int, default=None, help="Optional Maximum_Velocity_Limit to write.")
@@ -476,8 +476,10 @@ def main() -> int:
         print("Defaulting SO101 id 3 / elbow_flex to Feetech Phase=12.")
     if args.torque_limit is None:
         args.torque_limit = 1000 if args.motor_id == 3 else 300
+    if args.p_coefficient is None:
+        args.p_coefficient = 16 if args.motor_id == 3 else 32
     if args.min_startup_force is None:
-        args.min_startup_force = 800 if args.motor_id == 3 else 80
+        args.min_startup_force = 16 if args.motor_id == 3 else 80
 
     bus = make_bus(args)
     print(f"Opening {args.motor_name} only on {args.port}, id={args.motor_id}...")

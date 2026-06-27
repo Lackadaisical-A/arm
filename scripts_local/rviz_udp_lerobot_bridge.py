@@ -66,6 +66,11 @@ def parse_args() -> argparse.Namespace:
         help="Slider change required before a joint becomes active, in LeRobot deg/percent units.",
     )
     parser.add_argument(
+        "--send-all-direct-joints",
+        action="store_true",
+        help="In direct mode, command every joint every cycle. Default sends only changed sliders to reduce servo hunting.",
+    )
+    parser.add_argument(
         "--send-all-joints",
         action="store_true",
         help="Old behavior: command every joint from every RViz target.",
@@ -381,7 +386,7 @@ def main() -> int:
         SO101FollowerConfig(
             port=args.port,
             id=args.robot_id,
-            max_relative_target={motor: args.max_relative_target for motor in MOTORS},
+            max_relative_target=float(args.max_relative_target),
         )
     )
 
@@ -390,7 +395,13 @@ def main() -> int:
         print(f"Publishing real state to udp://{state_target[0]}:{state_target[1]} at {args.state_rate:.1f} Hz")
     print(f"Connecting to SO-101 follower on {args.port} with id '{args.robot_id}'...")
     robot.connect()
-    apply_elbow_phase(robot, args.elbow_phase)
+    apply_elbow_phase(
+        robot,
+        args.elbow_phase,
+        torque_limit=args.elbow_torque_limit,
+        startup_force=args.elbow_startup_force,
+        p_coefficient=args.elbow_p_coefficient,
+    )
     limits_deg = lerobot_limits_deg(robot)
     limits_deg = apply_manual_elbow_limits(robot, limits_deg, args.elbow_limits_file)
     mapping_config = MappingConfig(args.mapping_config)
@@ -408,6 +419,7 @@ def main() -> int:
     armed_reference: dict[str, float] | None = None
     command_base: dict[str, float] | None = None
     active_motors: set[str] = set()
+    last_direct_target: dict[str, float] | None = None
     interval = 1.0 / args.max_rate
 
     try:
@@ -422,14 +434,16 @@ def main() -> int:
                 latest_rx_t = rx_t
                 latest_seq = seq
                 latest_source = source
-                if enabled and not args.send_all_joints:
+                if enabled and args.control_mode == "direct" and last_direct_target is None:
+                    last_direct_target = target.copy()
+                elif enabled and args.control_mode != "direct" and not args.send_all_joints:
                     if armed_reference is None:
                         armed_reference = target.copy()
                         command_base = read_positions(robot)
                         active_motors.clear()
                     else:
                         active_motors.update(changed_motors(target, armed_reference, args.command_deadband))
-                elif enabled and args.send_all_joints and armed_reference is None:
+                elif enabled and args.control_mode != "direct" and args.send_all_joints and armed_reference is None:
                     armed_reference = target.copy()
                     command_base = read_positions(robot)
 
@@ -450,8 +464,12 @@ def main() -> int:
                         armed_reference = latest_target.copy() if latest_target is not None else None
                         command_base = read_positions(robot)
                         active_motors.clear()
+                        last_direct_target = latest_target.copy() if latest_target is not None else None
                         if args.control_mode == "direct":
-                            print("Streaming ENABLED. Direct slider follow mode.")
+                            if args.send_all_direct_joints:
+                                print("Streaming ENABLED. Direct slider follow mode, sending all joints.")
+                            else:
+                                print("Streaming ENABLED. Direct slider follow mode, sending changed sliders only.")
                         elif args.send_all_joints:
                             print("Streaming ENABLED. Relative mode, sending all RViz joints.")
                         else:
@@ -461,11 +479,13 @@ def main() -> int:
                         armed_reference = None
                         command_base = None
                         active_motors.clear()
+                        last_direct_target = None
                         print("Streaming PAUSED. Torque disabled.")
                 elif key == "c":
                     armed_reference = latest_target.copy() if latest_target is not None else None
                     command_base = read_positions(robot)
                     active_motors.clear()
+                    last_direct_target = latest_target.copy() if latest_target is not None else None
                     print("Cleared active sliders. Current RViz pose latched.")
                 elif key == "t":
                     enabled = False
@@ -473,6 +493,7 @@ def main() -> int:
                     armed_reference = None
                     command_base = None
                     active_motors.clear()
+                    last_direct_target = None
                     print("Torque disabled. Streaming paused.")
                 elif key == "p":
                     print("Current robot:", format_positions(read_positions(robot)))
@@ -482,8 +503,21 @@ def main() -> int:
             now = time.perf_counter()
             target_is_fresh = latest_rx_t is not None and (now - latest_rx_t) <= args.max_target_age
             if args.control_mode == "direct":
-                command_motors = MOTORS
-                should_send = enabled and latest_target and target_is_fresh and (now - last_send_t) >= interval
+                if args.send_all_direct_joints:
+                    command_motors = MOTORS
+                elif latest_target is not None and last_direct_target is not None:
+                    command_motors = ordered_motors(
+                        changed_motors(latest_target, last_direct_target, args.command_deadband)
+                    )
+                else:
+                    command_motors = []
+                should_send = (
+                    enabled
+                    and latest_target
+                    and target_is_fresh
+                    and bool(command_motors)
+                    and (now - last_send_t) >= interval
+                )
             else:
                 command_motors = MOTORS if args.send_all_joints else ordered_motors(active_motors)
                 should_send = (
@@ -511,8 +545,13 @@ def main() -> int:
                 if args.dry_run:
                     pass
                 else:
-                    robot.send_action(action_from_target(command_target, MOTORS))
-                if args.debug_targets and now - last_debug_t >= 0.2:
+                    robot.send_action(action_from_target(command_target, command_motors))
+                if args.control_mode == "direct" and latest_target is not None:
+                    if last_direct_target is None:
+                        last_direct_target = latest_target.copy()
+                    for motor in command_motors:
+                        last_direct_target[motor] = float(latest_target[motor])
+                if args.debug_targets and now - last_debug_t >= 0.2 and "elbow_flex" in command_motors:
                     current = read_positions(robot)
                     print(
                         "\nTarget elbow/current elbow: "
@@ -536,7 +575,11 @@ def main() -> int:
                 state = "ENABLED" if enabled else "PAUSED"
                 freshness = "fresh" if target_is_fresh else "stale/no target"
                 if args.control_mode == "direct":
-                    detail = "direct"
+                    if args.send_all_direct_joints:
+                        detail = "direct=all"
+                    else:
+                        active = ",".join(command_motors) if "command_motors" in locals() and command_motors else "none"
+                        detail = f"direct changed={active}"
                 else:
                     active = ",".join(ordered_motors(active_motors)) if active_motors else "none"
                     detail = f"active={active}"

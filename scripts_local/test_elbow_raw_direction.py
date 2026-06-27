@@ -103,7 +103,13 @@ def main() -> int:
 
     print(f"Connecting to SO-101 follower on {args.port}...")
     robot.connect()
-    apply_elbow_phase(robot, args.elbow_phase)
+    apply_elbow_phase(
+        robot,
+        args.elbow_phase,
+        torque_limit=args.elbow_torque_limit,
+        startup_force=args.elbow_startup_force,
+        p_coefficient=args.elbow_p_coefficient,
+    )
     try:
         robot.bus.enable_torque("elbow_flex")
         raw = print_raw("start", robot)

@@ -45,11 +45,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sample-hz", type=float, default=20.0, help="Recording sample rate.")
     parser.add_argument("--step-ticks", type=int, default=15, help="Keyboard control step in raw ticks.")
     parser.add_argument("--torque-limit", type=int, default=1000, help="Session torque limit, 0-1000.")
-    parser.add_argument("--p-coefficient", type=int, default=32, help="Elbow position P coefficient for this session.")
+    parser.add_argument("--p-coefficient", type=int, default=16, help="Elbow position P coefficient for this session.")
     parser.add_argument(
         "--min-startup-force",
         type=int,
-        default=800,
+        default=16,
         help="Minimum_Startup_Force for this session. Use 0 to leave unchanged.",
     )
     parser.add_argument("--acceleration", type=int, default=254, help="Elbow acceleration for this session.")

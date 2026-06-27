@@ -9,8 +9,8 @@ from lerobot.robots.so_follower import SO101Follower
 
 DEFAULT_PHASE_FILE = Path(__file__).resolve().parents[1] / "config" / "elbow_flex_phase.json"
 DEFAULT_ELBOW_TORQUE_LIMIT = 1000
-DEFAULT_ELBOW_MIN_STARTUP_FORCE = 800
-DEFAULT_ELBOW_P_COEFFICIENT = 32
+DEFAULT_ELBOW_MIN_STARTUP_FORCE = 16
+DEFAULT_ELBOW_P_COEFFICIENT = 16
 
 
 def load_saved_elbow_phase(path: Path = DEFAULT_PHASE_FILE) -> int | None:
@@ -27,9 +27,37 @@ def add_elbow_phase_arg(parser: ArgumentParser, default: int | None = 12) -> Non
         default=default,
         help="Feetech Phase value to force on elbow_flex before motion. Default is 12. Use -1 to skip.",
     )
+    parser.add_argument(
+        "--elbow-torque-limit",
+        type=int,
+        default=DEFAULT_ELBOW_TORQUE_LIMIT,
+        help="elbow_flex Torque_Limit. Lower reduces shake; higher improves lifting. Default is 1000.",
+    )
+    parser.add_argument(
+        "--elbow-startup-force",
+        type=int,
+        default=DEFAULT_ELBOW_MIN_STARTUP_FORCE,
+        help="elbow_flex Minimum_Startup_Force. Lower reduces hunting; higher breaks static friction. Default is 16.",
+    )
+    parser.add_argument(
+        "--elbow-p-coefficient",
+        type=int,
+        default=DEFAULT_ELBOW_P_COEFFICIENT,
+        help="elbow_flex P_Coefficient. Lower can reduce oscillation. Default is 16.",
+    )
 
 
-def apply_elbow_phase(robot: SO101Follower, phase: int | None) -> None:
+def clamp_register(value: int, low: int, high: int) -> int:
+    return min(high, max(low, int(value)))
+
+
+def apply_elbow_phase(
+    robot: SO101Follower,
+    phase: int | None,
+    torque_limit: int = DEFAULT_ELBOW_TORQUE_LIMIT,
+    startup_force: int = DEFAULT_ELBOW_MIN_STARTUP_FORCE,
+    p_coefficient: int = DEFAULT_ELBOW_P_COEFFICIENT,
+) -> None:
     if phase is None:
         phase = load_saved_elbow_phase()
         if phase is None:
@@ -43,15 +71,19 @@ def apply_elbow_phase(robot: SO101Follower, phase: int | None) -> None:
     except Exception:
         pass
     robot.bus.write("Phase", "elbow_flex", int(phase), normalize=False, num_retry=3)
-    robot.bus.write("P_Coefficient", "elbow_flex", DEFAULT_ELBOW_P_COEFFICIENT, normalize=False, num_retry=3)
+    torque_limit = clamp_register(torque_limit, 0, 1000)
+    startup_force = clamp_register(startup_force, 0, 1000)
+    p_coefficient = clamp_register(p_coefficient, 0, 254)
+
+    robot.bus.write("P_Coefficient", "elbow_flex", p_coefficient, normalize=False, num_retry=3)
     robot.bus.write(
         "Minimum_Startup_Force",
         "elbow_flex",
-        DEFAULT_ELBOW_MIN_STARTUP_FORCE,
+        startup_force,
         normalize=False,
         num_retry=3,
     )
-    robot.bus.write("Torque_Limit", "elbow_flex", DEFAULT_ELBOW_TORQUE_LIMIT, normalize=False, num_retry=3)
+    robot.bus.write("Torque_Limit", "elbow_flex", torque_limit, normalize=False, num_retry=3)
     actual = int(robot.bus.read("Phase", "elbow_flex", normalize=False))
     if actual != phase:
         raise RuntimeError(f"Failed to set elbow_flex Phase={phase}; servo reports Phase={actual}.")
@@ -59,6 +91,7 @@ def apply_elbow_phase(robot: SO101Follower, phase: int | None) -> None:
         robot.bus.enable_torque("elbow_flex", num_retry=3)
     print(
         f"elbow_flex Feetech Phase set to {actual}; "
-        f"torque_limit={DEFAULT_ELBOW_TORQUE_LIMIT}, "
-        f"startup={DEFAULT_ELBOW_MIN_STARTUP_FORCE}."
+        f"torque_limit={torque_limit}, "
+        f"startup={startup_force}, "
+        f"p={p_coefficient}."
     )
