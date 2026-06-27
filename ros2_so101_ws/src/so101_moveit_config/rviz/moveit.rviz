@@ -1,8 +1,6 @@
 Panels:
   - Class: rviz_common/Displays
     Name: Displays
-  - Class: moveit_rviz_plugin/MotionPlanning
-    Name: MotionPlanning
   - Class: rviz_common/Views
     Name: Views
 Visualization Manager:
