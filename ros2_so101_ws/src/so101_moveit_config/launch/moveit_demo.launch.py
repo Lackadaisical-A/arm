@@ -78,6 +78,16 @@ def generate_launch_description():
     bind_ip_arg = DeclareLaunchArgument("bind_ip", default_value="0.0.0.0")
     bind_port_arg = DeclareLaunchArgument("bind_port", default_value="50102")
     rviz_arg = DeclareLaunchArgument("rviz", default_value="true")
+    time_scale_arg = DeclareLaunchArgument(
+        "time_scale",
+        default_value="1.0",
+        description="Trajectory playback speed multiplier. 2.0 executes in half the planned time.",
+    )
+    controller_rate_arg = DeclareLaunchArgument(
+        "controller_rate_hz",
+        default_value="50.0",
+        description="SO-101 trajectory controller update/UDP stream rate.",
+    )
 
     return LaunchDescription(
         [
@@ -88,6 +98,8 @@ def generate_launch_description():
             bind_ip_arg,
             bind_port_arg,
             rviz_arg,
+            time_scale_arg,
+            controller_rate_arg,
             Node(
                 package="tf2_ros",
                 executable="static_transform_publisher",
@@ -140,6 +152,8 @@ def generate_launch_description():
                         "stream_udp": LaunchConfiguration("stream_plan_udp"),
                         "target_ip": LaunchConfiguration("target_ip"),
                         "target_port": LaunchConfiguration("target_port"),
+                        "rate_hz": LaunchConfiguration("controller_rate_hz"),
+                        "time_scale": LaunchConfiguration("time_scale"),
                     }
                 ],
                 output="screen",
@@ -155,6 +169,8 @@ def generate_launch_description():
                         "stream_udp": LaunchConfiguration("stream_plan_udp"),
                         "target_ip": LaunchConfiguration("target_ip"),
                         "target_port": LaunchConfiguration("target_port"),
+                        "rate_hz": LaunchConfiguration("controller_rate_hz"),
+                        "time_scale": LaunchConfiguration("time_scale"),
                     }
                 ],
                 output="screen",

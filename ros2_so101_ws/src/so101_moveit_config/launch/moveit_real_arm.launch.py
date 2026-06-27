@@ -9,6 +9,12 @@ def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument("rviz", default_value="true"),
+            DeclareLaunchArgument(
+                "time_scale",
+                default_value="1.0",
+                description="Trajectory playback speed multiplier. 2.0 executes in half the planned time.",
+            ),
+            DeclareLaunchArgument("controller_rate_hz", default_value="50.0"),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     PathJoinSubstitution(
@@ -19,6 +25,8 @@ def generate_launch_description():
                     "real_state": "true",
                     "stream_plan_udp": "true",
                     "rviz": LaunchConfiguration("rviz"),
+                    "time_scale": LaunchConfiguration("time_scale"),
+                    "controller_rate_hz": LaunchConfiguration("controller_rate_hz"),
                 }.items(),
             )
         ]

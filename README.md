@@ -55,6 +55,12 @@ source install/setup.bash
 ros2 launch so101_moveit_config moveit_real_arm.launch.py
 ```
 
+Speed up or slow down execution with `time_scale`. For example, this executes planned paths about twice as fast:
+
+```bash
+ros2 launch so101_moveit_config moveit_real_arm.launch.py time_scale:=2.0
+```
+
 The bridge still starts paused. Press `e` in PowerShell before allowing planned motion to move the real arm. `Plan` previews/animates in RViz; `Execute` sends the trajectory to the SO-101 trajectory controller, which can stream the executed path to the Windows bridge.
 
 ## Current Elbow Settings
