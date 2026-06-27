@@ -27,6 +27,36 @@ ros2 launch so101_description rviz_udp_control.launch.py
 
 Use the calibrated slider GUI. The bridge publishes real robot state back to RViz and commands the arm from the sliders.
 
+## WSL MoveIt RViz Planning
+
+MoveIt 2 is installed in WSL with the `so101_moveit_config` package. For visual planning demos:
+
+```bash
+cd ~/ros2_so101_ws
+source /opt/ros/jazzy/setup.bash
+source install/setup.bash
+ros2 launch so101_moveit_config moveit_demo.launch.py
+```
+
+For optional planned-trajectory streaming to the real arm, start the Windows bridge with URDF targets enabled:
+
+```powershell
+cd $env:USERPROFILE\Documents\lerobot
+.\activate_lerobot.ps1
+python .\scripts_local\rviz_udp_lerobot_bridge.py --port COM6 --accept-urdf-targets --max-rate 25 --command-deadband 0.5
+```
+
+Then launch MoveIt with UDP streaming:
+
+```bash
+cd ~/ros2_so101_ws
+source /opt/ros/jazzy/setup.bash
+source install/setup.bash
+ros2 launch so101_moveit_config moveit_demo.launch.py stream_plan_udp:=true
+```
+
+The bridge still starts paused. Press `e` in PowerShell before allowing planned motion to move the real arm.
+
 ## Current Elbow Settings
 
 The working elbow setup is:
@@ -34,6 +64,7 @@ The working elbow setup is:
 - `elbow_flex` servo id: `3`
 - Feetech `Phase`: `12`
 - `Torque_Limit`: `1000`
-- `Minimum_Startup_Force`: `800`
+- `Minimum_Startup_Force`: `16`
+- `P_Coefficient`: `16`
 
 These are applied by `scripts_local/so101_phase_utils.py` for the RViz bridge, keyboard teleop, and replay scripts.
