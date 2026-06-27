@@ -11,6 +11,7 @@ install(
 install(
   PROGRAMS
     scripts/display_trajectory_udp_bridge.py
+    scripts/so101_trajectory_controller.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -131,11 +131,12 @@ def generate_launch_description():
             ),
             Node(
                 package=moveit_pkg,
-                executable="display_trajectory_udp_bridge.py",
+                executable="so101_trajectory_controller.py",
                 condition=UnlessCondition(LaunchConfiguration("real_state")),
                 parameters=[
                     {
                         "publish_joint_states": True,
+                        "preview_plans": True,
                         "stream_udp": LaunchConfiguration("stream_plan_udp"),
                         "target_ip": LaunchConfiguration("target_ip"),
                         "target_port": LaunchConfiguration("target_port"),
@@ -145,11 +146,12 @@ def generate_launch_description():
             ),
             Node(
                 package=moveit_pkg,
-                executable="display_trajectory_udp_bridge.py",
+                executable="so101_trajectory_controller.py",
                 condition=IfCondition(LaunchConfiguration("real_state")),
                 parameters=[
                     {
                         "publish_joint_states": False,
+                        "preview_plans": False,
                         "stream_udp": LaunchConfiguration("stream_plan_udp"),
                         "target_ip": LaunchConfiguration("target_ip"),
                         "target_port": LaunchConfiguration("target_port"),

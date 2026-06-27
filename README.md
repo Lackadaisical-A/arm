@@ -46,7 +46,7 @@ cd $env:USERPROFILE\Documents\lerobot
 python .\scripts_local\rviz_udp_lerobot_bridge.py --port COM6 --accept-urdf-targets --max-rate 25 --command-deadband 0.5
 ```
 
-Then launch MoveIt with UDP streaming:
+Then launch MoveIt with UDP streaming enabled for `Execute`:
 
 ```bash
 cd ~/ros2_so101_ws
@@ -55,7 +55,7 @@ source install/setup.bash
 ros2 launch so101_moveit_config moveit_demo.launch.py stream_plan_udp:=true
 ```
 
-The bridge still starts paused. Press `e` in PowerShell before allowing planned motion to move the real arm.
+The bridge still starts paused. Press `e` in PowerShell before allowing planned motion to move the real arm. `Plan` previews/animates in RViz; `Execute` sends the trajectory to the SO-101 trajectory controller, which can stream the executed path to the Windows bridge.
 
 ## Current Elbow Settings
 
