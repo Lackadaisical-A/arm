@@ -37,9 +37,9 @@ Visualization Manager:
         Interactive Marker Size: 0.12
         Planning Group: arm
         Query Goal State: true
-        Query Start State: true
+        Query Start State: false
         Show Workspace: false
-        Start State Alpha: 1
+        Start State Alpha: 0
         Start State Color: 0; 255; 0
       Planning Scene Topic: /monitored_planning_scene
       Robot Description: robot_description
@@ -55,12 +55,12 @@ Visualization Manager:
         Robot Alpha: 0.5
         Show Attached Bodies: true
         Show Robot Collision: false
-        Show Robot Visual: true
+        Show Robot Visual: false
       Value: true
       Planned Path:
         Loop Animation: false
         Show Robot Collision: false
-        Show Robot Visual: true
+        Show Robot Visual: false
         State Display Time: 0.05 s
         Trajectory Topic: /display_planned_path
       Planning Metrics:
